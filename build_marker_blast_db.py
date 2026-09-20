@@ -127,14 +127,8 @@ class Command(BaseCommand):
         valid_nucleotide_chars = set('ATCGN')  # 只允许有效的核苷酸字符
 
         # 定义最小长度要求
-        # COI-5P 最少 300bp，其他 marker 最少 200bp
-        if marker == 'COI':
-            min_length = 300
-        elif marker == 'OTHER':
-            # OTHER 使用通用标准 200bp
-            min_length = 200
-        else:
-            min_length = 200
+        # 所有 marker 统一采用 200 bp 的最小长度标准
+        min_length = 200
 
         with open(fasta_path, 'w', encoding='utf-8') as f:
             seen_ids = set()  # 用于跟踪已使用的 ID，处理重复的 process_id

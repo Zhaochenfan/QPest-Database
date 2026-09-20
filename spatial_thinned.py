@@ -18,24 +18,36 @@ def scientific_spatial_thinning(input_csv, output_csv, decimalLatitude, decimalL
     df = pd.read_csv(input_csv)
     original_count = len(df)
     
-    # 2. 將分鐘分辨率轉換為十進制度數
+    # 2. 删除经纬度为空的行 (Null/Invalid)
+    df = df.dropna(subset=[decimalLatitude, decimalLongitude])
+
+    # 3. 过滤零值位置 (0, 0)
+    df = df[(df[decimalLatitude] != 0) & (df[decimalLongitude] != 0)]
+
+    # 4. 过滤超出全球合法范围的异常坐标 (Out of bounds)
+    df = df[
+        (df[decimalLatitude] >= -90) & (df[decimalLatitude] <= 90) &
+        (df[decimalLongitude] >= -180) & (df[decimalLongitude] <= 180)
+    ]
+
+    # 5. 將分鐘分辨率轉換為十進制度數
     # 2.5 minutes = 0.0416666667 degrees
     res_degree = resolution_min / 60.0
     
-    # 3. 創建網格索引 (Grid Binning)
+    # 6. 創建網格索引 (Grid Binning)
     # 這是最科學的方法：將坐標除以分辨率後取整，相同網格的點會得到相同的索引值
     df['grid_lat'] = np.floor(df[decimalLatitude] / res_degree)
     df['grid_lon'] = np.floor(df[decimalLongitude] / res_degree)
     
-    # 4. 執行稀疏化：在每個網格組中只保留第一個點
+    # 7. 執行稀疏化：在每個網格組中只保留第一個點
     # drop_duplicates 會保留重複項中的第一行，移除其餘行
     thinned_df = df.drop_duplicates(subset=['grid_lat', 'grid_lon'])
     
-    # 5. 移除輔助列並保存
+    # 8. 移除輔助列並保存
     thinned_df = thinned_df.drop(columns=['grid_lat', 'grid_lon'])
     thinned_df.to_csv(output_csv, index=False)
     
-    # 6. 輸出報告
+    # 9. 輸出報告
     thinned_count = len(thinned_df)
     reduction = original_count - thinned_count
     print(f"--- 稀疏化報告 ({input_csv}) ---")
